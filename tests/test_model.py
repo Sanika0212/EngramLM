@@ -6,7 +6,7 @@ from transformers import PreTrainedModel
 
 from engramlm.config import EngramConfig
 from engramlm.model import EngramLM, causal_lm_loss
-from tests.conftest import VOCAB, make_tiny_llama
+from tests.conftest import VOCAB, activate_reads, make_tiny_llama
 
 
 def _engram(base: PreTrainedModel, **overrides: object) -> EngramLM:
@@ -21,9 +21,8 @@ def _engram(base: PreTrainedModel, **overrides: object) -> EngramLM:
     return EngramLM(EngramConfig(**settings), base_model=base).eval()  # type: ignore[arg-type]
 
 
-def _open_gate(model: EngramLM, value: float = 1.0) -> None:
-    with torch.no_grad():
-        model.reader.gate.fill_(value)
+def _open_gate(model: EngramLM) -> None:
+    activate_reads(model.reader)
 
 
 def _segments(n: int = 3, batch: int = 2, length: int = 12, seed: int = 0) -> list[torch.Tensor]:

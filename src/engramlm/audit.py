@@ -12,13 +12,15 @@ leak through memory only shows up once memory holds something.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import torch
 from torch import Tensor
+
+from engramlm.reader import probe_reads
 
 if TYPE_CHECKING:
     from engramlm.model import EngramLM
@@ -75,21 +77,6 @@ def audit_causality(
     return AuditReport(max_abs_delta=worst, worst_cut=worst_cut, trials=trials, tolerance=tolerance)
 
 
-@contextmanager
-def _gate_value(model: EngramLM, value: float | None) -> Iterator[None]:
-    if value is None:
-        yield
-        return
-    saved = model.reader.gate.detach().clone()
-    with torch.no_grad():
-        model.reader.gate.fill_(value)
-    try:
-        yield
-    finally:
-        with torch.no_grad():
-            model.reader.gate.copy_(saved)
-
-
 def audit_engram(
     model: EngramLM,
     *,
@@ -99,13 +86,14 @@ def audit_engram(
     batch_size: int = 2,
     trials: int = 8,
     tolerance: float = 0.0,
-    open_gate: float | None = 1.0,
+    probe: bool = True,
     seed: int = 0,
 ) -> AuditReport:
     """Fill memory with ``warmup_segments`` random segments, then audit the next one.
 
-    ``open_gate`` temporarily sets the reader gate so that memory reads actually
-    affect the logits; an untrained model's zero gate would otherwise hide a leak.
+    With ``probe=True`` the reader temporarily gets a random output projection (see
+    :func:`engramlm.reader.probe_reads`), so memory reads affect the logits even for
+    an untrained model, whose zero output projection would otherwise hide a leak.
     """
     gen = torch.Generator().manual_seed(seed)
     device = model.device
@@ -116,7 +104,8 @@ def audit_engram(
     was_training = model.training
     model.eval()
     try:
-        with _gate_value(model, open_gate), torch.no_grad():
+        probing = probe_reads(model.reader, seed=seed) if probe else nullcontext()
+        with probing, torch.no_grad():
             memory = model.new_memory(batch_size, device)
             for _ in range(warmup_segments):
                 memory = model(sample(), memory=memory).memory

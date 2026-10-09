@@ -7,7 +7,7 @@ from engramlm.config import EngramConfig
 from engramlm.generation import generate
 from engramlm.model import EngramLM
 from engramlm.segment import evaluate_document, segment_bounds, token_nll_sum
-from tests.conftest import VOCAB, make_tiny_llama
+from tests.conftest import VOCAB, activate_reads, make_tiny_llama
 
 
 def _model(**overrides: object) -> EngramLM:
@@ -19,8 +19,7 @@ def _model(**overrides: object) -> EngramLM:
     }
     settings.update(overrides)
     model = EngramLM(EngramConfig(**settings), base_model=make_tiny_llama()).eval()  # type: ignore[arg-type]
-    with torch.no_grad():
-        model.reader.gate.fill_(1.0)
+    activate_reads(model.reader)
     return model
 
 

@@ -4,7 +4,8 @@ from torch import nn
 
 from engramlm.hooks import find_decoder_layers, resolve_layer_index
 from engramlm.memory import MemoryState, priority_retention, write
-from engramlm.reader import MemoryReader
+from engramlm.reader import MemoryReader, probe_reads
+from tests.conftest import activate_reads
 
 
 def _filled_memory(batch: int = 2, capacity: int = 6, dim: int = 16) -> MemoryState:
@@ -34,10 +35,9 @@ def test_empty_memory_short_circuits() -> None:
     assert info is None
 
 
-def test_reads_change_output_once_gate_opens() -> None:
+def test_reads_change_output_once_output_projection_is_trained() -> None:
     reader = MemoryReader(hidden_dim=16, key_dim=8, top_k=3)
-    with torch.no_grad():
-        reader.gate.fill_(1.0)
+    activate_reads(reader)
     hidden = torch.randn(2, 5, 16)
     fused, info = reader(hidden, _filled_memory(), return_reads=True)
     assert not torch.allclose(fused, hidden)
@@ -57,8 +57,7 @@ def test_invalid_slots_get_zero_weight() -> None:
 
 def test_each_token_reads_independently() -> None:
     reader = MemoryReader(hidden_dim=16, key_dim=8, top_k=3)
-    with torch.no_grad():
-        reader.gate.fill_(1.0)
+    activate_reads(reader)
     memory = _filled_memory()
     hidden = torch.randn(2, 5, 16)
     changed = hidden.clone()
@@ -70,8 +69,7 @@ def test_each_token_reads_independently() -> None:
 
 def test_priority_receives_gradient_from_reads() -> None:
     reader = MemoryReader(hidden_dim=16, key_dim=8, top_k=4)
-    with torch.no_grad():
-        reader.gate.fill_(1.0)
+    activate_reads(reader)
     priority = torch.rand(2, 4, requires_grad=True)
     memory = write(
         MemoryState.empty(2, 4, 16),
@@ -88,14 +86,23 @@ def test_priority_receives_gradient_from_reads() -> None:
 
 def test_drift_adapter_starts_as_identity() -> None:
     plain = MemoryReader(hidden_dim=16, key_dim=8, top_k=3)
+    activate_reads(plain)
     adapted = MemoryReader(hidden_dim=16, key_dim=8, top_k=3, drift_rank=2)
     adapted.load_state_dict(plain.state_dict(), strict=False)
-    for reader in (plain, adapted):
-        with torch.no_grad():
-            reader.gate.fill_(1.0)
     hidden = torch.randn(1, 4, 16)
     memory = _filled_memory(batch=1)
     assert torch.allclose(plain(hidden, memory)[0], adapted(hidden, memory)[0])
+
+
+def test_probe_reads_restores_weights() -> None:
+    reader = MemoryReader(hidden_dim=16, key_dim=8, top_k=3)
+    hidden = torch.randn(1, 4, 16)
+    memory = _filled_memory(batch=1)
+    with probe_reads(reader):
+        probed, _ = reader(hidden, memory)
+        assert not torch.allclose(probed, hidden)
+    assert torch.equal(reader.out.weight, torch.zeros_like(reader.out.weight))
+    assert torch.equal(reader(hidden, memory)[0], hidden)
 
 
 def test_find_decoder_layers(tiny_base: nn.Module) -> None:

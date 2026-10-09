@@ -6,6 +6,8 @@ import pytest
 import torch
 from transformers import GPT2Config, GPT2LMHeadModel, LlamaConfig, LlamaForCausalLM, PreTrainedModel
 
+from engramlm.reader import MemoryReader
+
 VOCAB = 97
 
 
@@ -51,3 +53,11 @@ def tiny_base(request: pytest.FixtureRequest) -> PreTrainedModel:
         make_tiny_llama if request.param == "llama" else make_tiny_gpt2
     )
     return factory()
+
+
+def activate_reads(reader: MemoryReader, std: float = 0.05, seed: int = 0) -> None:
+    """Give an untrained reader a non-zero output projection so reads change outputs."""
+    gen = torch.Generator().manual_seed(seed)
+    with torch.no_grad():
+        reader.out.weight.copy_(torch.randn(reader.out.weight.shape, generator=gen) * std)
+        reader.gate.fill_(1.0)

@@ -41,15 +41,15 @@ def test_audit_catches_a_sequence_pooling_leak() -> None:
     assert "FAIL" in report.summary()
 
 
-def test_audit_engram_restores_gate_and_mode() -> None:
+def test_audit_engram_restores_weights_and_mode() -> None:
     model = EngramLM(
         EngramConfig(capacity=16, writes_per_segment=4, read_top_k=4, key_dim=8),
         base_model=make_tiny_llama(),
     )
     model.train()
-    report = audit_engram(model, vocab_size=VOCAB, segment_len=12, open_gate=0.7)
+    report = audit_engram(model, vocab_size=VOCAB, segment_len=12)
     assert report.passed
-    assert float(model.reader.gate.detach()) == 0.0
+    assert torch.equal(model.reader.out.weight, torch.zeros_like(model.reader.out.weight))
     assert model.training
 
 

@@ -128,6 +128,7 @@ def train(
                 "grad_norm": float(grad_norm),
                 "lr": float(scheduler.get_last_lr()[0]),
                 "gate": float(torch.tanh(model.reader.gate.detach())),
+                "read_norm": float(model.reader.out.weight.detach().norm()),
             }
             history.append(record)
             if log is not None:
