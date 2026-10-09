@@ -1,0 +1,21 @@
+# Smoke-test version of E1 (about a minute on CPU). Numbers from this config are not meaningful.
+task:
+  pairs: 4
+  queries: 4
+  segment_len: 16
+  gap_segments: 1
+hidden_size: 64
+num_layers: 2
+memory_layer: 0
+key_dim: 16
+writes_per_segment: 8
+capacities: [16]
+variants: [no-memory, surprise, learned]
+seeds: [0]
+eval_docs: 64
+train:
+  steps: 200
+  batch_size: 16
+  lr: 0.003
+  warmup_steps: 20
+  log_every: 50

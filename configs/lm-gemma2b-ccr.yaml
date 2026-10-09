@@ -1,0 +1,27 @@
+# E2 at GPU scale (intended for an HPC cluster such as UB CCR; not yet run).
+#   sbatch scripts/ccr.slurm configs/lm-gemma2b-ccr.yaml runs/lm-gemma2b
+base_model_name: google/gemma-2-2b
+dataset: wikitext
+dataset_config: wikitext-103-raw-v1
+train_split: train
+eval_split: test
+segment_len: 512
+doc_len: 4096
+min_doc_tokens: 4096
+max_eval_docs: 60
+variants: [base, full-context, lora, lora+recency, lora+surprise, lora+learned]
+memory:
+  capacity: 2048
+  writes_per_segment: 128
+  read_top_k: 32
+  key_dim: 256
+  memory_layer: -4
+lora_rank: 16
+seeds: [0, 1, 2]
+train:
+  steps: 3000
+  batch_size: 2
+  lr: 0.0002
+  warmup_steps: 100
+  log_every: 100
+  bptt_segments: 2

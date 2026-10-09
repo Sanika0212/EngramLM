@@ -1,0 +1,27 @@
+# E2: long-document language modelling on WikiText-2 with SmolLM2-135M (laptop scale).
+#   engramlm lm --config configs/lm-smollm2.yaml --out runs/lm-smollm2 --device mps
+base_model_name: HuggingFaceTB/SmolLM2-135M
+dataset: wikitext
+dataset_config: wikitext-2-raw-v1
+train_split: train
+eval_split: test
+segment_len: 128
+doc_len: 512
+min_doc_tokens: 512
+max_eval_docs: 40
+variants: [base, full-context, lora, lora+recency, lora+surprise, lora+learned]
+memory:
+  capacity: 256
+  writes_per_segment: 32
+  read_top_k: 16
+  key_dim: 128
+  memory_layer: -4
+lora_rank: 8
+seeds: [0]
+train:
+  steps: 300
+  batch_size: 4
+  lr: 0.0005
+  warmup_steps: 30
+  log_every: 50
+  bptt_segments: 2
