@@ -1,0 +1,8 @@
+.git
+.venv
+runs
+checkpoints
+**/__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
