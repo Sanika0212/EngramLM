@@ -2,7 +2,7 @@
 
 Each document has ``gap_segments + 2`` segments of ``segment_len`` tokens:
 
-* **study**: ``pairs`` key/value pairs ``k1 v1 k2 v2 ...`` followed by filler;
+* **study**: ``pairs`` key/value pairs ``k1 v1 k2 v2 ...`` at a random offset, in filler;
 * **gap**: filler only, competing for memory slots;
 * **test**: queries ``Q k v`` for keys from the study segment, followed by filler.
 
@@ -80,8 +80,10 @@ class RecallTask:
         for b in range(batch_size):
             keys = torch.randperm(self.n_keys, generator=generator)[: self.pairs]
             values = torch.randint(0, self.n_values, (self.pairs,), generator=generator)
-            ids[b, 0 : 2 * self.pairs : 2] = self.key_offset + keys
-            ids[b, 1 : 2 * self.pairs : 2] = self.value_offset + values
+            # Random offset so no scorer is favoured by where the pairs sit in the segment.
+            offset = int(torch.randint(0, seg - 2 * self.pairs + 1, (1,), generator=generator))
+            ids[b, offset : offset + 2 * self.pairs : 2] = self.key_offset + keys
+            ids[b, offset + 1 : offset + 2 * self.pairs : 2] = self.value_offset + values
             asked = torch.randperm(self.pairs, generator=generator)[: self.queries]
             for q, pair in enumerate(asked.tolist()):
                 pos = test_start + 3 * q

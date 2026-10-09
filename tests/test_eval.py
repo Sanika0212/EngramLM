@@ -79,7 +79,10 @@ def test_recall_task_layout() -> None:
     assert target.sum(dim=1).tolist() == [3] * 5
     test_start = task.segment_len * (task.num_segments - 1)
     for b in range(5):
-        study = dict(zip(ids[b, 0:8:2].tolist(), ids[b, 1:8:2].tolist(), strict=True))
+        study_seg = ids[b, : task.segment_len].tolist()
+        first_key = next(i for i, tok in enumerate(study_seg) if tok < task.value_offset)
+        pairs = study_seg[first_key : first_key + 2 * task.pairs]
+        study = dict(zip(pairs[0::2], pairs[1::2], strict=True))
         for pos in target[b].nonzero().squeeze(1).tolist():
             assert pos >= test_start
             assert int(ids[b, pos - 2]) == QUERY
