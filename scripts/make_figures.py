@@ -5,7 +5,8 @@
 Inputs (any that are missing are skipped):
     runs/recall/results.json + runs/recall.log   E1 accuracy chart and training curves
     runs/lm-smollm2/results.json                 E2 chart
-    runs/demo/{recency,learned}/                 checkpoints for the memory animation
+    runs/recall/checkpoints/                     E1 checkpoints (recency and learned,
+                                                 capacity 32, seed 0) for the animation
 Outputs go to docs/assets/ as <name>-light.* and <name>-dark.*.
 """
 
@@ -61,11 +62,8 @@ def recall_figures(results: Path, log: Path) -> None:
             )
 
 
-def memory_animation(demo: Path, config_task: RecallTask, seed: int) -> None:
-    models = {
-        "Recency (FIFO)": load_pretrained(demo / "recency"),
-        "Learned salience": load_pretrained(demo / "learned"),
-    }
+def memory_animation(ckpts: dict[str, Path], config_task: RecallTask, seed: int) -> None:
+    models = {name: load_pretrained(path) for name, path in ckpts.items()}
     gen = torch.Generator().manual_seed(seed)
     ids, _ = config_task.sample(1, gen)
     timelines = {name: recall_timeline(model, config_task, ids) for name, model in models.items()}
@@ -75,7 +73,7 @@ def memory_animation(demo: Path, config_task: RecallTask, seed: int) -> None:
     )
 
 
-def inspector_screenshot(demo: Path, task: RecallTask, seed: int) -> None:
+def inspector_screenshot(checkpoint: Path, task: RecallTask, seed: int) -> None:
     chrome = (
         shutil.which("google-chrome")
         or "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -83,7 +81,7 @@ def inspector_screenshot(demo: Path, task: RecallTask, seed: int) -> None:
     if not Path(chrome).exists():
         print("Chrome not found; skipping inspector screenshot")
         return
-    model = load_pretrained(demo / "learned")
+    model = load_pretrained(checkpoint)
     ids, _ = task.sample(1, torch.Generator().manual_seed(seed))
     names = {1: "Q"}
     texts = []
@@ -123,7 +121,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--recall", default="runs/recall")
     parser.add_argument("--lm", default="runs/lm-smollm2")
-    parser.add_argument("--demo", default="runs/demo")
+    parser.add_argument("--demo-capacity", type=int, default=32)
     parser.add_argument("--seed", type=int, default=7)
     args = parser.parse_args()
     ASSETS.mkdir(parents=True, exist_ok=True)
@@ -137,15 +135,15 @@ def main() -> None:
         both_modes(
             plot_lm_results, ASSETS / "lm-results", rows=json.loads(lm_results.read_text())["rows"]
         )
-    demo = Path(args.demo)
-    if (demo / "learned").exists() and (demo / "recency").exists():
-        task = (
-            RecallTask(**json.loads(recall_results.read_text())["config"]["task"])
-            if recall_results.exists()
-            else RecallTask()
-        )
-        memory_animation(demo, task, args.seed)
-        inspector_screenshot(demo, task, args.seed)
+    ckpt_root = Path(args.recall) / "checkpoints"
+    ckpts = {
+        "Recency (FIFO)": ckpt_root / f"recency-cap{args.demo_capacity}-seed0",
+        "Learned salience": ckpt_root / f"learned-cap{args.demo_capacity}-seed0",
+    }
+    if recall_results.exists() and all(p.exists() for p in ckpts.values()):
+        task = RecallTask(**json.loads(recall_results.read_text())["config"]["task"])
+        memory_animation(ckpts, task, args.seed)
+        inspector_screenshot(ckpts["Learned salience"], task, args.seed)
     for path in sorted(ASSETS.iterdir()):
         print(path)
 
