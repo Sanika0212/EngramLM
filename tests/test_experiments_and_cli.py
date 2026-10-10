@@ -54,6 +54,16 @@ def test_recall_experiment_writes_results(tmp_path: Path) -> None:
     assert "| no-memory | — | 1 |" in table
 
 
+def test_recall_experiment_can_save_checkpoints(tmp_path: Path) -> None:
+    config = RecallExperimentConfig.from_dict(
+        {**QUICK_RECALL, "variants": ["learned"], "save_checkpoints": True}
+    )
+    run_experiment(config, tmp_path, log=lambda _: None)
+    checkpoint = tmp_path / "checkpoints" / "learned-cap8-seed0"
+    assert (checkpoint / "engram_config.json").exists()
+    assert (checkpoint / "base").exists()
+
+
 def test_recall_config_rejects_unknown_variants() -> None:
     with pytest.raises(ValueError, match="unknown variants"):
         RecallExperimentConfig.from_dict({"variants": ["telepathy"]})

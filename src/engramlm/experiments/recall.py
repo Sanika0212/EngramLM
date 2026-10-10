@@ -50,6 +50,7 @@ class RecallExperimentConfig:
     seeds: list[int] = field(default_factory=lambda: [0, 1, 2])
     train: TrainConfig = field(default_factory=TrainConfig)
     eval_docs: int = 512
+    save_checkpoints: bool = False
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RecallExperimentConfig:
@@ -113,6 +114,7 @@ def run_one(
     seed: int,
     device: torch.device,
     log: Callable[[str], None] = print,
+    checkpoint_dir: Path | None = None,
 ) -> dict[str, Any]:
     model = build_model(config, variant, capacity, seed).to(device)
     train_cfg = TrainConfig(**{**config.train.to_dict(), "seed": seed})
@@ -129,6 +131,10 @@ def run_one(
     )
     seconds = time.perf_counter() - started
     result = evaluate_recall(model, config.task, n_docs=config.eval_docs, seed=99_000 + seed)
+    if checkpoint_dir is not None:
+        from engramlm.io import save_pretrained
+
+        save_pretrained(model, checkpoint_dir)
     return {
         "variant": variant,
         "capacity": capacity if model.config.memory_enabled else 0,
@@ -179,7 +185,12 @@ def run_experiment(
         for capacity in capacities:
             for seed in config.seeds:
                 log(f"running {variant} capacity={capacity or '-'} seed={seed}")
-                row = run_one(config, variant, max(capacity, 1), seed, device, log)
+                ckpt = (
+                    out / "checkpoints" / f"{variant}-cap{capacity}-seed{seed}"
+                    if config.save_checkpoints
+                    else None
+                )
+                row = run_one(config, variant, max(capacity, 1), seed, device, log, ckpt)
                 log(f"  -> accuracy {row['accuracy']:.3f} ({row['train_seconds']}s)")
                 rows.append(row)
                 payload = {"config": config.to_dict(), "rows": rows}
