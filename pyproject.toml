@@ -32,6 +32,7 @@ dependencies = [
 
 [project.optional-dependencies]
 train = ["peft>=0.17", "datasets>=3.0"]
+viz = ["matplotlib>=3.9", "pillow>=10.4"]
 
 [project.scripts]
 engramlm = "engramlm.cli:main"
