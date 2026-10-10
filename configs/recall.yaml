@@ -1,5 +1,5 @@
 # E1: cross-segment associative recall (the configuration behind the README results).
-# Runs on CPU in roughly 1.5-2 hours on a laptop:  engramlm recall --config configs/recall.yaml --out runs/recall
+# Runs on CPU in roughly 2 hours on a laptop:  engramlm recall --config configs/recall.yaml --out runs/recall
 task:
   n_keys: 32
   n_values: 32
@@ -16,10 +16,12 @@ key_dim: 32
 read_top_k: 8
 writes_per_segment: 16
 consolidate_threshold: 0.95
-capacities: [16, 64]
-variants: [no-memory, recency, random, surprise, learned, learned+sleep]
+capacities: [32, 64]
+# recency and learned first: their capacity-32 checkpoints drive the README animation
+variants: [no-memory, recency, learned, learned+sleep, surprise, random]
 seeds: [0, 1, 2]
 eval_docs: 512
+save_checkpoints: true
 train:
   steps: 4000
   batch_size: 32
