@@ -20,6 +20,7 @@ import subprocess
 from pathlib import Path
 
 import torch
+from leak_demo import measure_leaks  # sibling script in scripts/
 
 from engramlm.eval.recall import RecallTask
 from engramlm.inspector import build_report
@@ -35,13 +36,6 @@ from engramlm.plots import (
 )
 
 ASSETS = Path("docs/assets")
-
-# Leak sizes measured with engramlm.audit on a tiny random Llama (see scripts/leak_demo.py).
-CAUSALITY = [
-    ("Plain causal LM (control)", 0.0),
-    ("Sequence-pooled memory", 1.161e-01),
-    ("EngramLM, all 16 variants", 0.0),
-]
 
 
 def recall_figures(results: Path, log: Path) -> None:
@@ -126,7 +120,7 @@ def main() -> None:
     args = parser.parse_args()
     ASSETS.mkdir(parents=True, exist_ok=True)
 
-    both_modes(plot_causality, ASSETS / "causality", entries=CAUSALITY)
+    both_modes(plot_causality, ASSETS / "causality", entries=measure_leaks())
     recall_results = Path(args.recall) / "results.json"
     if recall_results.exists():
         recall_figures(recall_results, Path(args.recall).with_suffix(".log"))

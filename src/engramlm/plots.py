@@ -377,26 +377,25 @@ def plot_causality(
     _title(
         fig,
         "Does changing a future token move earlier predictions?",
-        "Largest change in earlier logits when only the last token changes "
+        "Largest change in earlier logits when every token after a random cut changes "
         "(a causal model must show 0)",
         theme,
     )
-    scale = 1e-3
-    largest = max(v for _, v in entries) / scale
-    xmax = max(1.0, math.ceil(largest * 1.25))
+    largest = max(v for _, v in entries)
+    scale = 10.0 ** math.floor(math.log10(largest)) if largest > 0 else 1.0
+    xmax = math.ceil(largest / scale * 1.3) * scale if largest > 0 else 1.0
     ax.set_xlim(0, xmax)
     ax.set_ylim(len(entries) - 0.5, -0.5)
     _style_axes(ax, theme, grid_axis="x")
     _, ppy = _px_per_unit(ax)
     height = min(0.5, (20 * fig.dpi / CSS_PX) / ppy)
     for i, (_, value) in enumerate(entries):
-        scaled = value / scale
-        if scaled > 0:
-            _rounded_bar(ax, i - height / 2, height, scaled, theme.series[1], horizontal=True)
+        if value > 0:
+            _rounded_bar(ax, i - height / 2, height, value, theme.series[1], horizontal=True)
             ax.text(
-                scaled + xmax * 0.012,
+                value + xmax * 0.012,
                 i,
-                f"{value:.1e}",
+                f"{value:.3f}" if value >= 1e-3 else f"{value:.1e}",
                 va="center",
                 fontsize=8.5,
                 color=theme.ink2,
@@ -415,7 +414,7 @@ def plot_causality(
             )
             ax.text(xmax * 0.025, i, "0 (exact)", va="center", fontsize=8.5, color=theme.ink2)
     ax.set_yticks(range(len(entries)), [label for label, _ in entries])
-    ax.set_xlabel("max |Δ logits|  (×10⁻³)")
+    ax.set_xlabel("max |Δ logits| at or before the cut")
     return _save(fig, Path(out))
 
 
