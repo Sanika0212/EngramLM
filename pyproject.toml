@@ -67,6 +67,8 @@ ignore = ["RUF001", "RUF002", "RUF003"]
 [tool.ruff.lint.per-file-ignores]
 # Embedded CSS/JS for the self-contained HTML report.
 "src/engramlm/inspector.py" = ["E501"]
+# Embedded SVG template for the README banner.
+"scripts/make_banner.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"
