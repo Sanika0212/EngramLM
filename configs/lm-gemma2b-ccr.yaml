@@ -1,7 +1,7 @@
 # E2 at GPU scale (intended for an HPC cluster such as UB CCR; not yet run).
 #   sbatch scripts/ccr.slurm configs/lm-gemma2b-ccr.yaml runs/lm-gemma2b
 base_model_name: google/gemma-2-2b
-dataset: wikitext
+dataset: Salesforce/wikitext
 dataset_config: wikitext-103-raw-v1
 train_split: train
 eval_split: test

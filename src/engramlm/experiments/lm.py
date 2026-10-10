@@ -44,7 +44,7 @@ TRAINED_VARIANTS: dict[str, dict[str, Any]] = {
 @dataclass
 class LMExperimentConfig:
     base_model_name: str = "HuggingFaceTB/SmolLM2-135M"
-    dataset: str = "wikitext"
+    dataset: str = "Salesforce/wikitext"
     dataset_config: str = "wikitext-2-raw-v1"
     train_split: str = "train"
     eval_split: str = "test"

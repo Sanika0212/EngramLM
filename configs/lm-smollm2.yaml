@@ -1,7 +1,7 @@
 # E2: long-document language modelling on WikiText-2 with SmolLM2-135M (laptop scale).
 #   engramlm lm --config configs/lm-smollm2.yaml --out runs/lm-smollm2 --device mps
 base_model_name: HuggingFaceTB/SmolLM2-135M
-dataset: wikitext
+dataset: Salesforce/wikitext
 dataset_config: wikitext-2-raw-v1
 train_split: train
 eval_split: test
