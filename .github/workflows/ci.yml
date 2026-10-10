@@ -25,7 +25,7 @@ jobs:
       - name: Create environment (CPU-only PyTorch)
         run: |
           uv venv --python ${{ matrix.python-version }}
-          uv pip install --torch-backend cpu -e ".[train]" --group dev
+          uv pip install --torch-backend cpu -e ".[train,viz]" --group dev
       - name: Lint
         run: |
           uv run --no-sync ruff check src tests
