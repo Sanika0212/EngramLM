@@ -3,9 +3,9 @@
 Every figure is rendered in a light and a dark theme so a README can switch with
 ``<picture>``. Colours come from a fixed, colour-vision-checked palette:
 
-* memory variants always use the same categorical slot in every chart;
-* capacity (an ordered quantity) uses two steps of one blue ramp;
-* salience (a magnitude) uses a single-hue sequential ramp.
+- memory variants always use the same categorical slot in every chart;
+- capacity (an ordered quantity) uses two steps of one blue ramp;
+- salience (a magnitude) uses a single-hue sequential ramp.
 """
 
 from __future__ import annotations

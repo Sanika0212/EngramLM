@@ -51,7 +51,7 @@ def test_recall_experiment_writes_results(tmp_path: Path) -> None:
     assert len(saved["rows"]) == 2
     table = (tmp_path / "results.md").read_text()
     assert "| learned | 8 | 1 |" in table
-    assert "| no-memory | — | 1 |" in table
+    assert "| no-memory | n/a | 1 |" in table
 
 
 def test_recall_experiment_can_save_checkpoints(tmp_path: Path) -> None:

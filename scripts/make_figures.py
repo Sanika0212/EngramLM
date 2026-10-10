@@ -87,7 +87,7 @@ def inspector_screenshot(checkpoint: Path, task: RecallTask, seed: int) -> None:
         elif task.value_offset <= t < task.filler_offset:
             texts.append(f" V{t - task.value_offset}")
         else:
-            texts.append(" ·")
+            texts.append(" _")
     html = build_report(
         model,
         ids,

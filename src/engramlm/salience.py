@@ -7,12 +7,12 @@ without breaking causality.
 
 Built-in scorers (select with ``EngramConfig.scorer``):
 
-* ``surprise``: standardized next-token NLL under the model itself. Parameter-free.
-* ``learned``: a small MLP over the hidden state plus the surprise feature,
+- ``surprise``: standardized next-token NLL under the model itself. Parameter-free.
+- ``learned``: a small MLP over the hidden state plus the surprise feature,
   initialised to reproduce ``surprise`` exactly and trained through the priority
   bias that later reads apply.
-* ``random``: uniform random priorities (a control).
-* ``recency``: later tokens in a segment get higher priority (a Transformer-XL-like
+- ``random``: uniform random priorities (a control).
+- ``recency``: later tokens in a segment get higher priority (a Transformer-XL-like
   control that carries the tail of each segment forward).
 """
 

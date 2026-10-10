@@ -2,12 +2,12 @@
 
 Articles are split into segments that the base model sees one at a time. Variants:
 
-* ``base``: the frozen base model, no training, no memory (segment-local context);
-* ``lora``: LoRA fine-tuning only, no memory: the control that isolates what the
+- ``base``: the frozen base model, no training, no memory (segment-local context);
+- ``lora``: LoRA fine-tuning only, no memory: the control that isolates what the
   memory adds beyond fine-tuning on the domain;
-* ``lora+<scorer>``: LoRA plus memory with the given salience scorer, trained with
+- ``lora+<scorer>``: LoRA plus memory with the given salience scorer, trained with
   exactly the same data, steps and optimiser settings as ``lora``;
-* ``full-context`` (reference): the base model with a sliding window spanning the
+- ``full-context`` (reference): the base model with a sliding window spanning the
   whole document, i.e. what unlimited attention would achieve.
 
 Reported metrics are token-weighted perplexity and bits per byte on held-out

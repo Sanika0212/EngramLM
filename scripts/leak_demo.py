@@ -2,11 +2,11 @@
 
     uv run python scripts/leak_demo.py
 
-* a plain causal LM (control),
-* the same LM with a *sequence-pooled* memory: the mean hidden state of the whole
+- a plain causal LM (control),
+- the same LM with a *sequence-pooled* memory: the mean hidden state of the whole
   sequence is added to every position, a common way memory modules end up
   seeing the future,
-* EngramLM wrapping the same LM, with reads switched on (``probe_reads``) and a
+- EngramLM wrapping the same LM, with reads switched on (``probe_reads``) and a
   filled memory, for every scorer, eviction policy and consolidation setting.
 
 Each number is the largest absolute change in logits at or before a random cut

@@ -2,9 +2,9 @@
 
 Each document has ``gap_segments + 2`` segments of ``segment_len`` tokens:
 
-* **study**: ``pairs`` key/value pairs ``k1 v1 k2 v2 ...`` at a random offset, in filler;
-* **gap**: filler only, competing for memory slots;
-* **test**: queries ``Q k v`` for keys from the study segment, followed by filler.
+- **study**: ``pairs`` key/value pairs ``k1 v1 k2 v2 ...`` at a random offset, in filler;
+- **gap**: filler only, competing for memory slots;
+- **test**: queries ``Q k v`` for keys from the study segment, followed by filler.
 
 The base model sees one segment at a time, so without memory a value in the test
 segment is unpredictable (chance is ``1 / n_values``). The scored targets are the

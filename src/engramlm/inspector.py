@@ -2,9 +2,9 @@
 
 The report is a single self-contained HTML file (no external scripts or fonts):
 
-* every token is shaded by the salience priority it received;
-* tokens that entered memory are outlined;
-* clicking a token lists the memory slots it read, with the source token, its
+- every token is shaded by the salience priority it received;
+- tokens that entered memory are outlined;
+- clicking a token lists the memory slots it read, with the source token, its
   position and segment, and the attention weight.
 
 Because reads can only target earlier segments, the trace doubles as a visible

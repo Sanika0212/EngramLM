@@ -163,7 +163,7 @@ def summarize(rows: list[dict[str, Any]], chance: float) -> str:
         groups.items(), key=lambda kv: (order[kv[0][0]], kv[0][1])
     ):
         interval = bootstrap_ci(accs, n_resamples=5000)
-        cap = "—" if capacity == 0 else str(capacity)
+        cap = "n/a" if capacity == 0 else str(capacity)
         lines.append(f"| {variant} | {cap} | {len(accs)} | {interval.format()} |")
     return "\n".join(lines) + "\n"
 
