@@ -1,0 +1,35 @@
+# E1b: the same recall task with a tight write budget (4 of 32 tokens per segment), so
+# the salience scorer has to choose which tokens enter memory at all.
+# engramlm recall --config configs/recall-tight.yaml --out runs/recall-tight
+task:
+  n_keys: 32
+  n_values: 32
+  n_filler: 32
+  pairs: 8
+  queries: 8
+  segment_len: 32
+  gap_segments: 2
+hidden_size: 128
+num_layers: 3
+num_heads: 4
+memory_layer: 1
+key_dim: 32
+read_top_k: 8
+writes_per_segment: 4
+consolidate_threshold: 0.95
+capacities: [32]
+# recency and learned first: their capacity-32 checkpoints drive the README animation
+variants: [recency, random, surprise, learned]
+seeds: [0, 1, 2]
+eval_docs: 512
+save_checkpoints: false
+# The study-to-test gap grows over the first 1500 steps; without it many seeds never
+# learn to read memory at all (accuracy stays at chance). Evaluation uses the full gap.
+curriculum_steps: 1500
+train:
+  steps: 4000
+  batch_size: 32
+  lr: 0.003
+  warmup_steps: 200
+  log_every: 500
+  bptt_segments: 0
