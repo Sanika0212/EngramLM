@@ -131,3 +131,15 @@ def test_cli_recall(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     config_path.write_text(yaml.safe_dump({**QUICK_RECALL, "variants": ["learned"]}))
     assert main(["recall", "--config", str(config_path), "--out", str(tmp_path / "run")]) == 0
     assert "Chance accuracy" in capsys.readouterr().out
+
+
+def test_curriculum_grows_the_gap_then_uses_the_full_task() -> None:
+    from engramlm.eval.recall import RecallTask
+    from engramlm.experiments.recall import _batches
+
+    task = RecallTask(gap_segments=2)
+    stream = _batches(task, batch_size=2, seed=0, curriculum_steps=40)
+    lengths = [next(stream)[0].shape[1] for _ in range(60)]
+    assert lengths[0] == task.segment_len * 2  # step 1: no gap yet
+    assert set(lengths[:40]) <= {task.segment_len * n for n in (2, 3, 4)}
+    assert all(n == task.doc_len for n in lengths[40:])

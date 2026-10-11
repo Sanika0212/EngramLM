@@ -9,9 +9,10 @@ memory variant and capacity, over several seeds. Results are written as
 from __future__ import annotations
 
 import json
+import random
 import time
 from collections.abc import Callable, Iterator
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -51,6 +52,7 @@ class RecallExperimentConfig:
     train: TrainConfig = field(default_factory=TrainConfig)
     eval_docs: int = 512
     save_checkpoints: bool = False
+    curriculum_steps: int = 0
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> RecallExperimentConfig:
@@ -100,11 +102,26 @@ def build_model(config: RecallExperimentConfig, variant: str, capacity: int, see
 
 
 def _batches(
-    task: RecallTask, batch_size: int, seed: int
+    task: RecallTask, batch_size: int, seed: int, curriculum_steps: int = 0
 ) -> Iterator[tuple[torch.Tensor, torch.Tensor]]:
+    """Training batches; with a curriculum, the study-to-test gap grows over training.
+
+    For the first ``curriculum_steps`` steps each batch draws its number of gap
+    segments uniformly from ``0`` up to a ceiling that rises linearly to the task's
+    full gap, so the model first learns to read memory over short distances.
+    Evaluation always uses the full gap.
+    """
     gen = torch.Generator().manual_seed(10_000 + seed)
+    picker = random.Random(20_000 + seed)
+    step = 0
     while True:
-        yield task.sample(batch_size, gen)
+        step += 1
+        if curriculum_steps and step <= curriculum_steps:
+            ceiling = round(task.gap_segments * step / curriculum_steps)
+            gap = picker.randint(0, ceiling)
+            yield replace(task, gap_segments=gap).sample(batch_size, gen)
+        else:
+            yield task.sample(batch_size, gen)
 
 
 def run_one(
@@ -121,7 +138,7 @@ def run_one(
     started = time.perf_counter()
     history = train(
         model,
-        _batches(config.task, train_cfg.batch_size, seed),
+        _batches(config.task, train_cfg.batch_size, seed, config.curriculum_steps),
         segment_len=config.task.segment_len,
         config=train_cfg,
         log=lambda rec: log(
