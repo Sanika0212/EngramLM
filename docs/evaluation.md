@@ -29,8 +29,22 @@ What it tests: whether the write policy keeps the right tokens under capacity
 pressure (gap segments write filler that competes for slots), and whether reads
 retrieve them.
 
+Training uses a curriculum: for the first 1,500 steps the gap between study and test
+grows from zero to the full task. Without it, many seeds never learned to read memory.
+Evaluation always uses the full gap.
+
 ```bash
 uv run engramlm recall --config configs/recall.yaml --out runs/recall
+```
+
+## E1b: choosing what to write
+
+This is E1 with `writes_per_segment: 4`. All writes fit in memory, so eviction never
+happens and the scorer alone decides which tokens are stored. It compares recency,
+random, surprise and learned scorers at capacity 32, with three seeds.
+
+```bash
+uv run engramlm recall --config configs/recall-tight.yaml --out runs/recall-tight
 ```
 
 ## E2: long-document language modelling
