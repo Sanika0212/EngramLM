@@ -220,6 +220,11 @@ class EngramLM(nn.Module):
 
         every = self.config.consolidate_every
         if every and result.memory.segments_seen % every == 0:
-            result.memory, stats = consolidate(result.memory, self.config.consolidate_threshold)
+            # At most an eighth of the bank merges per sleep, so a burst of similar
+            # hidden states early in training cannot collapse the whole memory.
+            limit = max(1, self.config.capacity // 8)
+            result.memory, stats = consolidate(
+                result.memory, self.config.consolidate_threshold, max_merges=limit
+            )
             result.merges = stats.merges
         return result

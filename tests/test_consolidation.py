@@ -49,10 +49,19 @@ def test_max_merges_is_respected() -> None:
     assert stats.merges.tolist() == [2]
 
 
-def test_runs_without_gradient() -> None:
-    priority = torch.rand(1, 4, requires_grad=True)
-    merged, _ = consolidate(_state(torch.randn(1, 4, 3), priority), threshold=0.0)
-    assert not merged.priority.requires_grad
+def test_gradients_flow_through_merged_and_untouched_slots() -> None:
+    a = torch.tensor([1.0, 0.0, 0.0])
+    b = torch.tensor([0.0, 1.0, 0.0])
+    vectors = torch.stack([a, a * 2.0, b]).unsqueeze(0).requires_grad_(True)
+    priority = torch.tensor([[0.25, 0.75, 0.5]], requires_grad=True)
+    merged, stats = consolidate(_state(vectors, priority), threshold=0.99)
+    assert stats.merges.tolist() == [1]
+    (merged.vectors.sum() + merged.priority.sum()).backward()
+    assert vectors.grad is not None
+    assert priority.grad is not None
+    # Both merged slots and the untouched slot receive gradient; weights are 0.25/0.75.
+    assert torch.allclose(vectors.grad[0, :, 0], torch.tensor([0.25, 0.75, 1.0]))
+    assert torch.allclose(priority.grad, torch.ones(1, 3))
 
 
 @settings(max_examples=50, deadline=None)
