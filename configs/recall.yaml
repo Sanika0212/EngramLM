@@ -22,6 +22,9 @@ variants: [no-memory, recency, learned, learned+sleep, surprise, random]
 seeds: [0, 1, 2]
 eval_docs: 512
 save_checkpoints: true
+# The study-to-test gap grows over the first 1500 steps; without it many seeds never
+# learn to read memory at all (accuracy stays at chance). Evaluation uses the full gap.
+curriculum_steps: 1500
 train:
   steps: 4000
   batch_size: 32
