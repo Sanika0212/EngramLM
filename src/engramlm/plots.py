@@ -705,9 +705,10 @@ def animate_memory(
             (origin_colors[0], "written in segment 1 (study)"),
             (origin_colors[1], "segment 2 (filler)"),
             (origin_colors[2], "segment 3 (filler)"),
+            (origin_colors[3], "segment 4 (test)"),
             (theme.empty, "empty"),
         ]
-        positions = (0.0, 0.25, 0.43, 0.61, 0.73)
+        positions = (0.0, 0.22, 0.37, 0.52, 0.66, 0.75)
         for (color, label), x in zip(items, positions, strict=False):
             lax.add_patch(Rectangle((x, 0.3), 0.014, 0.4, facecolor=color, linewidth=0))
             lax.text(x + 0.02, 0.5, label, va="center", fontsize=8.3, color=theme.ink2)
