@@ -1,4 +1,7 @@
-# EngramLM
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
+  <img alt="EngramLM: causal, salience-gated memory for Hugging Face language models" src="docs/assets/banner-light.svg" width="100%">
+</picture>
 
 **Causal, salience-gated external memory for Hugging Face causal language models.**
 
@@ -13,6 +16,11 @@ evicts what has gone stale, and lets later segments read from it, one token at a
 time. It is **causal by construction**, starts out **identical to the base model**,
 and ships a **numerical audit** that proves both properties instead of assuming
 them.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/memory-dark.gif">
+  <img alt="Animation: two 32-slot memories read the same document segment by segment; first-in-first-out memory loses every study fact to the filler segments, while learned salience keeps four of them and recalls two of eight values" src="docs/assets/memory-light.gif" width="100%">
+</picture>
 
 ## Why
 
@@ -98,6 +106,109 @@ engramlm lm --config configs/lm-smollm2.yaml --out runs/lm --device mps  # exper
 engramlm inspect --checkpoint runs/ckpt --text doc.txt --out trace.html  # memory inspector
 ```
 
+## Results
+
+### E1: carrying facts across segments
+
+Each document has four 32-token segments:
+
+1. a study segment with 8 key/value pairs at a random offset among filler;
+2. two filler segments;
+3. a test segment that asks for the 8 values.
+
+The model reads one segment at a time, so without memory it can only guess (3.1%).
+The models are small 3-layer Llama-style networks trained from scratch for 4,000 steps,
+3 seeds each, and evaluated on 512 documents. Every variant writes 16 of each
+segment's 32 tokens.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/recall-accuracy-dark.png">
+  <img alt="Bar chart of recall accuracy: no memory and first-in-first-out at capacity 32 are at chance; every other variant reaches 35 to 38 percent" src="docs/assets/recall-accuracy-light.png" width="100%">
+</picture>
+
+| Variant | Capacity 32 | Capacity 64 |
+|---|---|---|
+| No memory | 2.9% [2.6, 3.3] | n/a |
+| Recency (first in, first out) | 3.0% [2.7, 3.2] | 37.7% [37.5, 37.8] |
+| Random eviction | 37.1% [36.1, 38.1] | 37.3% [37.2, 37.4] |
+| Surprise salience | 35.0% [32.7, 37.7] | 35.5% [34.7, 36.5] |
+| Learned salience | 38.0% [36.9, 39.2] | 38.1% [37.3, 39.5] |
+| Learned salience + sleep consolidation | 37.8% [37.3, 38.1] | 37.4% [37.0, 37.6] |
+
+The figures are mean accuracy over 3 seeds, with 95% bootstrap intervals.
+
+What this shows:
+
+1. **The memory works.** Every variant that keeps the study segment recalls about 12
+   times more values than chance.
+2. **Eviction matters when memory is small.** With 32 slots, the two filler segments
+   push the whole study segment out of a first-in-first-out memory, and recall drops
+   to chance. Any priority-based policy keeps enough of it.
+3. **On this task, choosing which tokens to keep matters little.** Learned salience
+   scores highest, but it is within the interval of random eviction. With 16 writes
+   per segment, random choices already keep about a third of the study tokens. A
+   value token's hidden state can also carry its key from the same segment, so one
+   surviving token per pair may be enough. E1b, a version with a tight write budget,
+   tests salience directly.
+
+Two fixes were needed before every seed trained:
+
+1. **Sleep consolidation cut the gradient.** It rebuilt memory from detached copies,
+   so the scorer could never learn with consolidation on. Merges are now applied
+   differentiably.
+2. **A curriculum.** The study-to-test gap grows over the first 1,500 steps. Without it,
+   many seeds never learned to read memory at all.
+
+The training curves show the curriculum at work: first-in-first-out memory falls back
+to chance exactly when the full gap appears.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/training-curves-cap32-dark.png">
+  <img alt="Training loss at capacity 32: first-in-first-out memory jumps back to chance at step 1500 when the full gap appears; the other variants keep improving" src="docs/assets/training-curves-cap32-light.png" width="100%">
+</picture>
+
+The [memory inspector](docs/assets/inspector-demo.html) shows what a trained model
+wrote and read, token by token:
+
+<img alt="Memory inspector: four segments of a recall document with each token shaded by write priority and outlined when written to memory" src="docs/assets/inspector.png" width="100%">
+
+### E2: long-document language modelling
+
+SmolLM2-135M reads WikiText-2 test articles of 512 tokens in 128-token segments, with
+40 articles and one seed. Every memory variant is trained with LoRA, so the comparison
+that matters is against LoRA alone. Full context (the whole article in one window) is
+the upper bound.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lm-results-dark.png">
+  <img alt="Dot plot of bits per byte: base 1.1217, LoRA only 0.9651, LoRA with memory 0.9592 to 0.9599, full context 0.9336" src="docs/assets/lm-results-light.png" width="100%">
+</picture>
+
+| Variant | Bits per byte | Perplexity |
+|---|---|---|
+| Base model, segment-local | 1.1217 | 29.16 |
+| LoRA only | 0.9651 | 18.21 |
+| LoRA + recency memory | 0.9599 | 17.93 |
+| LoRA + surprise memory | 0.9592 | 17.89 |
+| LoRA + learned memory | 0.9593 | 17.89 |
+| Full context (upper bound) | 0.9336 | 16.56 |
+
+Memory lowers bits per byte by about 0.6% over LoRA alone. That recovers roughly a
+fifth of the gap to full context. It is a single seed on a small model, so treat it as
+a direction, not a measured effect size.
+
+### Causality
+
+`engramlm audit` changes every token after a random cut and measures how far the
+logits before the cut move. A causal model must show exactly zero. A memory that pools
+over the current sequence leaks future information; EngramLM does not, in any of its
+16 configurations.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/causality-dark.png">
+  <img alt="Bar chart: a plain causal LM and all 16 EngramLM variants show zero change in earlier logits; a sequence-pooled memory shows 0.116" src="docs/assets/causality-light.png" width="100%">
+</picture>
+
 ## How it works
 
 ```mermaid
@@ -138,6 +249,9 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
    every few segments, not every step.
 3. The laptop-scale experiments use small models. GPU-scale configs are included
    but have not been run yet.
+4. In E1, learned salience does not beat random eviction by more than seed noise.
+   E1b tests whether choosing what to remember helps under a tight write budget.
+5. E2 is a single seed. Its gain over LoRA alone (about 0.6% bits per byte) is small.
 
 ## Citation
 
