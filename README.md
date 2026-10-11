@@ -148,8 +148,8 @@ What this shows:
    scores highest, but it is within the interval of random eviction. With 16 writes
    per segment, random choices already keep about a third of the study tokens. A
    value token's hidden state can also carry its key from the same segment, so one
-   surviving token per pair may be enough. E1b, a version with a tight write budget,
-   tests salience directly.
+   surviving token per pair may be enough. E1b, below, tests salience with a tight
+   write budget.
 
 Two fixes were needed before every seed trained:
 
@@ -171,6 +171,27 @@ The [memory inspector](docs/assets/inspector-demo.html) shows what a trained mod
 wrote and read, token by token:
 
 <img alt="Memory inspector: four segments of a recall document with each token shaded by write priority and outlined when written to memory" src="docs/assets/inspector.png" width="100%">
+
+### E1b: choosing what to write
+
+This is the same task, but each segment may write only 4 of its 32 tokens. The 16
+writes fit in the 32 slots, so nothing is evicted, and the only question is which
+tokens get written.
+
+| Write policy | Accuracy (3 seeds, 95% interval) |
+|---|---|
+| Random tokens | 33.7% [32.8, 34.3] |
+| Surprise (most unexpected tokens) | 36.1% [35.9, 36.2] |
+| Learned salience | 37.7% [37.3, 38.3] |
+| Recency (each segment's last tokens) | 38.1% [37.6, 38.8] |
+
+1. **Choosing what to write matters.** Random writes lose about 4 points.
+2. **The learned scorer finds a good policy on its own.** It is trained only through
+   later memory reads. It beats random and surprise by more than seed noise and
+   matches the best hand-written rule.
+3. **That rule is position.** In a causal model, a segment's last tokens have attended
+   to the whole segment, so their hidden states likely summarise it. Surprise picks
+   individually unusual tokens, which carry less.
 
 ### E2: long-document language modelling
 
@@ -249,8 +270,9 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
    every few segments, not every step.
 3. The laptop-scale experiments use small models. GPU-scale configs are included
    but have not been run yet.
-4. In E1, learned salience does not beat random eviction by more than seed noise.
-   E1b tests whether choosing what to remember helps under a tight write budget.
+4. With a generous write budget (E1), learned salience does not beat random eviction
+   by more than seed noise. With a tight budget (E1b), it beats random and surprise
+   but only matches writing each segment's last tokens.
 5. E2 is a single seed. Its gain over LoRA alone (about 0.6% bits per byte) is small.
 
 ## Citation
