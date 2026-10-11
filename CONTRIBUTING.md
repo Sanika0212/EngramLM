@@ -35,3 +35,8 @@ keep it that way for new tests.
    config in `configs/` and the commands in `docs/evaluation.md`.
 4. Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,
    `fix:`, `docs:`, `test:`, `chore:`, `ci:`).
+
+## License of contributions
+
+By contributing, you agree that your contributions are licensed under the Apache
+License 2.0, the license of this project.

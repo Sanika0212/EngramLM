@@ -7,8 +7,8 @@ name = "engramlm"
 version = "0.1.0"
 description = "Causal, salience-gated external memory for Hugging Face causal language models"
 readme = "README.md"
-license = "MIT"
-license-files = ["LICENSE"]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Sanika Najan", email = "sanikanajan@gmail.com" }]
 requires-python = ">=3.11"
 keywords = ["language-models", "memory", "transformers", "long-context", "pytorch"]

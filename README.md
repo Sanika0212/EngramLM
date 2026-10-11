@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/Sanika0212/EngramLM/actions/workflows/ci.yml/badge.svg)](https://github.com/Sanika0212/EngramLM/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11%E2%80%933.13-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue)
 
 EngramLM wraps any causal LM (Llama, Qwen, Gemma, SmolLM, GPT-2, …) with a memory
 that carries information across segments of a long document. After each segment
@@ -151,4 +151,8 @@ See [`CITATION.cff`](CITATION.cff).
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache License 2.0. Copyright 2026 Sanika Najan. See [LICENSE](LICENSE) and
+[NOTICE](NOTICE).
+
+Model weights and datasets used by the experiments are downloaded at run time and
+keep their own licenses.
