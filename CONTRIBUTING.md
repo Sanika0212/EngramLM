@@ -28,10 +28,10 @@ keep it that way for new tests.
 
 ## Ground rules
 
-- **Causality is non-negotiable.** Any change to the read or write path must keep
-  `tests/test_model.py::test_wrapper_is_causal` passing with an exact-zero delta.
-- **Identity at init.** An untrained wrapper must reproduce its base model.
-- **Results come from runs.** Numbers in the README must be reproducible from a
-  config in `configs/` and the commands in `docs/evaluation.md`.
-- Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,
-  `fix:`, `docs:`, `test:`, `chore:`, `ci:`).
+1. **Causality is non-negotiable.** Any change to the read or write path must keep
+   `tests/test_model.py::test_wrapper_is_causal` passing with an exact-zero delta.
+2. **Identity at init.** An untrained wrapper must reproduce its base model.
+3. **Results come from runs.** Numbers in the README must be reproducible from a
+   config in `configs/` and the commands in `docs/evaluation.md`.
+4. Use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,
+   `fix:`, `docs:`, `test:`, `chore:`, `ci:`).

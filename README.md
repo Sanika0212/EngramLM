@@ -24,32 +24,32 @@ before *k*, and `engramlm audit` checks it numerically on any model.
 
 ## Features
 
-- **Per-token, past-only reads** at a configurable decoder layer, via a forward
-  hook. Works with any Hugging Face causal LM, with no model surgery.
-- **Explicit `MemoryState`** per stream. Evaluation is deterministic and batches
-  never share memory.
-- **Vectorized writes and eviction**: `priority` (decayed) or `fifo`, with no
-  Python loops over tokens.
-- **Pluggable salience**:
-  - `surprise`: the model's own token NLL.
-  - `learned`: a small MLP trained through later reads, initialised to equal `surprise`.
-  - `random` and `recency` controls.
-- **Sleep-phase consolidation**: merges near-duplicate memories at a fixed budget
-  and conserves total priority mass.
-- **Identity at initialisation**: an untrained wrapper reproduces the base model's
-  logits bit-for-bit.
-- **Causality audit** (`engramlm audit`): perturbs future tokens and checks that
-  earlier logits do not move.
-- **Memory inspector**: a self-contained HTML trace of salience, writes and the
-  provenance of every read.
-- **Fair evaluation**:
-  - bits per byte;
-  - identical target sets across variants;
-  - a LoRA-only control;
-  - a full-context reference;
-  - bootstrap intervals.
-- **Training** with truncated backprop through memory, LoRA via PEFT, and
-  adapter-only checkpoints.
+1. **Per-token, past-only reads** at a configurable decoder layer, via a forward
+   hook. Works with any Hugging Face causal LM, with no model surgery.
+2. **Explicit `MemoryState`** per stream. Evaluation is deterministic and batches
+   never share memory.
+3. **Vectorized writes and eviction**: `priority` (decayed) or `fifo`, with no
+   Python loops over tokens.
+4. **Pluggable salience**:
+   1. `surprise`: the model's own token NLL.
+   2. `learned`: a small MLP trained through later reads, initialised to equal `surprise`.
+   3. `random` and `recency` controls.
+5. **Sleep-phase consolidation**: merges near-duplicate memories at a fixed budget
+   and conserves total priority mass.
+6. **Identity at initialisation**: an untrained wrapper reproduces the base model's
+   logits bit-for-bit.
+7. **Causality audit** (`engramlm audit`): perturbs future tokens and checks that
+   earlier logits do not move.
+8. **Memory inspector**: a self-contained HTML trace of salience, writes and the
+   provenance of every read.
+9. **Fair evaluation**:
+   1. bits per byte;
+   2. identical target sets across variants;
+   3. a LoRA-only control;
+   4. a full-context reference;
+   5. bootstrap intervals.
+10. **Training** with truncated backprop through memory, LoRA via PEFT, and
+    adapter-only checkpoints.
 
 ## Install
 
@@ -133,11 +133,11 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Limitations
 
-- Memory reads happen at one decoder layer; multi-layer reads are not implemented.
-- Consolidation is greedy and runs per stream on the host; it is meant to run
-  every few segments, not every step.
-- The laptop-scale experiments use small models. GPU-scale configs are included
-  but have not been run yet.
+1. Memory reads happen at one decoder layer; multi-layer reads are not implemented.
+2. Consolidation is greedy and runs per stream on the host; it is meant to run
+   every few segments, not every step.
+3. The laptop-scale experiments use small models. GPU-scale configs are included
+   but have not been run yet.
 
 ## Citation
 
@@ -145,9 +145,9 @@ See [`CITATION.cff`](CITATION.cff).
 
 ## References
 
-- Transformer-XL (Dai et al., 2019) and Memorizing Transformers (Wu et al., 2022)
-  for past-only, retrieval-based memory over long documents.
-- LoRA (Hu et al., 2021) for low-rank adaptation and zero-initialised updates.
+1. Transformer-XL (Dai et al., 2019) and Memorizing Transformers (Wu et al., 2022)
+   for past-only, retrieval-based memory over long documents.
+2. LoRA (Hu et al., 2021) for low-rank adaptation and zero-initialised updates.
 
 ## License
 
